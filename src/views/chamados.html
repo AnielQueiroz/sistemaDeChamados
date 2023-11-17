@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      input[type="number"]::-webkit-inner-spin-button,
+      input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      textarea {
+        resize: none;
+      }
+      body {
+        background-color: #919191;
+      }
+    </style>
+
+    <script type="module">
+      document.addEventListener("DOMContentLoaded", async function () {
+        const headerPlaceholder = document.querySelector("#header-placeholder");
+        headerPlaceholder.innerHTML =
+          '<object type="text/html" data="./partials/header.html" ></object>';
+
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          window.location.href = "/";
+        }
+        await fetch("/valida/token", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+          .then((response) => {
+            if (response.status != 200) {
+              console.log(response);
+              window.location.href = "/";
+            }
+          })
+          .catch((error) => {
+            console.log(error);
+            window.location.href = "/";
+          });
+
+        const response = await fetch("/funcionarios/funcionario", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+        const funcionario = data.funcionario;
+
+        if (response.ok) {
+          document.getElementById("analista").value = funcionario.name;
+          localStorage.setItem("funcionario", JSON.stringify(data.funcionario));
+        } else {
+          alert(data.msg);
+          window.location.href = "/";
+        }
+      });
+
+      import {
+        preencherDataAtual,
+        preencherHoraAtual,
+      } from "../scripts/dataAtual.js";
+      import { registrarChamado } from "../scripts/registrarChamado.js";
+      import { buscarNomeAcademia } from "../scripts/buscarNomeAcademia.js";
+      // Preencher a data atual ao carregar a página
+      window.onload = function () {
+        preencherDataAtual();
+        registrarChamado();
+      };
+    </script>
+  </head>
+
+  <body>
+    <div id="header-placeholder"></div>
+
+    <div class="container mx-auto mt-8 grid justify-items-center">
+      <h1 class="text-2xl font-bold mb-4">Registro de Chamados</h1>
+      <form class="w-4/5">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="analista"
+            >
+              Analista:
+            </label>
+            <input
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="analista"
+              type="text"
+              placeholder="Digite o nome do analista"
+              disabled
+            />
+          </div>
+          <div>
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="data"
+            >
+              Data:
+            </label>
+            <input
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="data"
+              type="date"
+              placeholder="Digite a data"
+              onchange="preencherDataAtual()"
+            />
+          </div>
+          <!-- <div>
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="hora"
+            >
+              Hora:
+            </label>
+            <input
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="hora"
+              type="text"
+              placeholder="Digite a hora"
+            />
+          </div> -->
+          <div>
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="canal"
+            >
+              Canal:
+            </label>
+            <select
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="canal"
+              required
+            >
+              <option value="">Selecione o canal</option>
+              <option value="Whatsapp">Whatsapp</option>
+              <option value="Ligação">Ligação</option>
+              <option value="Teams">Teams</option>
+              <option value="E-mail">E-mail</option>
+            </select>
+          </div>
+          <div>
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="id-academia"
+            >
+              ID Academia:
+            </label>
+            <input
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="id-academia"
+              type="number"
+              placeholder="Digite o ID da academia"
+              required
+            />
+          </div>
+          <div>
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="academia"
+            >
+              Academia:
+            </label>
+            <input
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="academia"
+              type="text"
+              placeholder="---"
+              disabled
+            />
+          </div>
+          <div>
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="teamviewer"
+            >
+              Teamviewer:
+            </label>
+            <input
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="teamviewer"
+              type="number"
+              placeholder="Digite o Teamviewer"
+            />
+          </div>
+          <div>
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="problema"
+            >
+              Problema:
+            </label>
+            <textarea
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              name="problema"
+              id="problema"
+              cols="10"
+              rows="5"
+            >
+            </textarea>
+          </div>
+          <!-- <div>
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="solucao"
+            >
+              Solução:
+            </label>
+            <textarea
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              name="solucao"
+              id="solucao"
+              cols="10"
+              rows="5"
+            >
+            </textarea>
+          </div> -->
+        </div>
+        <div class="flex justify-end">
+          <button
+            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            type="button"
+            id="btn-registrar-chamado"
+          >
+            Registrar Chamado
+          </button>
+        </div>
+      </form>
+    </div>
+  </body>
+</html>
